@@ -92,3 +92,5 @@ ENV/
 
 MNIST_data/
 train_log/
+.idea/workspace.xml
+images

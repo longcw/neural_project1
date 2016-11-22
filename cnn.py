@@ -3,6 +3,7 @@ import numpy as np
 from datetime import datetime
 import os
 import net_tools as net
+import mnist_utils as utils
 from tensorflow.examples.tutorials.mnist import input_data
 
 
@@ -10,11 +11,14 @@ from tensorflow.examples.tutorials.mnist import input_data
 learning_rate = 1e-4
 use_relu = True
 batch_size = 128
-max_epoch = 60
-validation_size = 5000
-train_log_dir = r'/home/longc/code/neural_project1/train_log'
-ckpt_dir = os.path.join(train_log_dir, r'model_cnn.ckpt')
+max_epoch = 30
+validation_size = 0
+project_dir = r'/home/longc/code/neural_project1'
+train_log_dir = os.path.join(project_dir, 'train_log')
+ckpt_dir = os.path.join(train_log_dir, r'model_cnn.ckpt-14000')
+image_save_dir = os.path.join(project_dir, r'images')
 load_ckpt = True
+save_image = load_ckpt
 
 # load minist dataset
 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True, validation_size=validation_size)
@@ -42,7 +46,8 @@ fc4_drop = tf.nn.dropout(fc4, keep_prob)
 logits = net.fc_layer('fc5', fc4_drop, 10, linear=True)
 y = tf.nn.softmax(logits, name='y')
 
-correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+prediction_op = tf.argmax(y, 1)
+correct_prediction = tf.equal(prediction_op, tf.argmax(y_, 1))
 correct_cnt_op = tf.reduce_sum(tf.cast(correct_prediction, tf.int32))
 accuracy_op = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 tf.scalar_summary('train_accuracy', accuracy_op)
@@ -107,14 +112,36 @@ else:
 test_batch_size = 100
 correct_cnt = 0
 sample_cnt = 0
+false_xs = list()
+true_ys = list()
+false_ys = list()
 while True:
     batch = mnist.test.next_batch(test_batch_size)
     if mnist.test.epochs_completed >= 1:
         break
     feed_dict = {x: batch[0], y_: batch[1], keep_prob: 1.0}
-    correct_cnt += sess.run(correct_cnt_op, feed_dict=feed_dict)
+    [cnt, prediction] = sess.run([correct_cnt_op, prediction_op], feed_dict=feed_dict)
+    correct_cnt += cnt
     sample_cnt += test_batch_size
+
+    # find wrong preditions
+    labels = np.argmax(batch[1], axis=1)
+    correct = np.equal(prediction, labels)
+    keep = np.where(correct != True)
+    false_xs.extend(batch[0][keep])
+    true_ys.extend(labels[keep])
+    false_ys.extend(prediction[keep])
+
 assert(sample_cnt == 10000)
 
 test_accuracy = float(correct_cnt) / sample_cnt
 print('test: accuracy=%.4f' % (test_accuracy,))
+
+# save false images
+if save_image:
+    print('saving {} images to {}'.format(len(false_xs), image_save_dir))
+    utils.mkdir(image_save_dir, overwrite=True)
+    false_xs = np.asarray(false_xs, dtype=np.float)
+    false_ys = np.asarray(false_ys, dtype=np.int)
+    true_ys = np.asarray(true_ys, dtype=np.int)
+    utils.save_images(false_xs, true_ys, false_ys, image_save_dir)
