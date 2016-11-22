@@ -7,12 +7,12 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 # hyper-parameters
 learning_rate = 1e-4
-use_relu = False
+use_relu = True
 batch_size = 128
 max_epoch = 30
 train_log_dir = r'/home/longc/code/neural_project1/train_log'
-ckpt_dir = r'/home/longc/code/neural_project1/train_log/model_mlp.ckpt-14041'
-load_ckpt = False
+ckpt_dir = r'/home/longc/code/neural_project1/train_log/model_mlp_relu.ckpt'
+load_ckpt = True
 
 # load minist dataset
 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True, validation_size=0)
