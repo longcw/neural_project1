@@ -65,10 +65,13 @@ duration = 0.05
 threshold = 1
 rest = 0.
 max_rate = 600
+rescale_fac = 1. / (dt * max_rate)
+
+tm_fac = 1. / 1.8
+El = 0.5
 
 for t in np.arange(dt, duration+dt, dt):
     # Create poisson distributed spikes from the input images
-    rescale_fac = 1. / (dt * max_rate)
     spike_snapshot = np.random.rand(*x_test.shape) * rescale_fac
     spikes = np.asarray(spike_snapshot <= x_test, dtype=np.float32)
     for i in range(layer_num):
@@ -76,8 +79,10 @@ for t in np.arange(dt, duration+dt, dt):
         b = params[i*2+1]
         # Get input impulse from incoming spikes
         impulse = np.matmul(spikes, W) + b
+
         # Add input to membrane potential
-        mems[i] += impulse
+        dV = tm_fac * (El - mems[i] + impulse)
+        mems[i] += dV
         # Check for spiking and Rest
         spikes = np.asarray(mems[i] > np.array(threshold), dtype=np.float32)
         mems[i][spikes > 0] = 0
