@@ -32,3 +32,31 @@ def mkdir(dir, overwrite=False):
         else:
             return
     os.mkdir(dir)
+
+
+def save_npz(save_list, sess, name='model.npz'):
+    """Input parameters and the file name, save parameters into .npz file. Use tl.utils.load_npz() to restore.
+    """
+
+    # save params into a list
+    save_list_var = []
+    for k, value in enumerate(save_list):
+        save_list_var.append(sess.run(value))
+
+    np.savez(name, params=save_list_var)
+    print('Model is saved to: %s' % name)
+
+    return save_list_var
+
+    ## save params into a dictionary
+    # rename_dict = {}
+    # for k, value in enumerate(save_dict):
+    #     rename_dict.update({'param'+str(k) : value.eval()})
+    # np.savez(name, **rename_dict)
+    # print('Model is saved to: %s' % name)
+
+
+def load_npz(name):
+    d = np.load(name)
+
+    return d['params']

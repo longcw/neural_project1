@@ -13,6 +13,8 @@ max_epoch = 30
 train_log_dir = r'/home/longc/code/neural_project1/train_log'
 ckpt_dir = r'/home/longc/code/neural_project1/train_log/model_mlp_relu.ckpt'
 load_ckpt = True
+layer_sizes = [64, 128, 10]
+layer_num = len(layer_sizes)
 
 # load minist dataset
 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True, validation_size=0)
@@ -24,9 +26,11 @@ x = tf.placeholder(tf.float32, shape=[None, 784], name='x')
 y_ = tf.placeholder(tf.float32, shape=[None, 10], name='y_')
 
 # forward pass
-fc1 = net.fc_layer('fc1', x, 64, relu=use_relu)
-fc2 = net.fc_layer('fc2', fc1, 128, relu=use_relu)
-logits = net.fc_layer('fc3', fc2, 10, linear=True)
+fc = net.fc_layer('fc1', x, layer_sizes[0], relu=use_relu)
+for i in range(1, layer_num - 1):
+    fc = net.fc_layer('fc{}'.format(i + 1), fc, layer_sizes[i], relu=use_relu)
+
+logits = net.fc_layer('fc{}'.format(layer_num), fc, layer_sizes[-1], linear=True)
 y = tf.nn.softmax(logits, name='y')
 
 correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
